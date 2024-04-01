@@ -1,8 +1,8 @@
 substitutions:
-  device_name: "Toshiba AC Example"
+  device_name: "Toshiba ESTIA R32 Example"
 
 esphome:
-  name: toshiba-ac-example
+  name: toshiba-estia-example
   platform: ESP8266
   board: esp12e
 
@@ -24,15 +24,15 @@ uart:
   parity: EVEN
 
 climate:
-  - platform: tcc_link
+  - platform: tu2c_link
     name: "${device_name}"
-    id: toshiba_ac
+    id: toshiba_hp
     connected:
-      name: "${device_name} Connected"
+      name: ""${device_name} Connected"
     failed_crcs:
       name: "${device_name} Failed CRCs"
     vent:
-      name: "${device_name} Vent"
+      name: "${device_name} Vent Switch"
     on_data_received:
-      - lambda: |-
-          ESP_LOGD("TCC", "Data received: %d bytes", x.size());
+    - lambda: |-
+        ESP_LOGD("TU2C", "Data received: %d bytes", x.size());

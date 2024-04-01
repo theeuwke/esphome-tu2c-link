@@ -1,6 +1,8 @@
-# ESPHome Toshiba TCC-Link AC Component
+# ESPHome Toshiba TU2C-Link AC Component
 
-ESPHome component to integrate with Toshiba Air Conditioners via TCC-Link protocol (AB line).
+ESPHome component to integrate with Toshiba Air Conditioners via TU2C-Link protocol (AB line).
+
+This code is based on muxa esphome-tcc-link: https://github.com/muxa/esphome-tcc-link
 
 Requires reader & writer circuit for the AB line: https://github.com/issalig/toshiba_air_cond
 
@@ -10,7 +12,7 @@ Requires reader & writer circuit for the AB line: https://github.com/issalig/tos
 external_components:
   - source:
       type: git
-      url: https://github.com/muxa/esphome-tcc-link
+      url: https://github.com/theeuwe/esphome-tu2c-link
 
 ```
 
@@ -24,7 +26,7 @@ uart:
   parity: EVEN
 
 climate:
-  - platform: tcc_link
+  - platform: tu2c_link
     name: "Toshiba AC"
     id: toshiba_ac
     connected:

@@ -1,9 +1,9 @@
-#include "tcc_link.h"
+#include "tu2c_link.h"
 
 namespace esphome {
-namespace tcc_link {
+namespace tu2c_link {
 
-static const char *const TAG = "tcc_link.climate";
+static const char *const TAG = "tu2c_link.climate";
 
 const LogString *opcode_to_string(uint8_t opcode) {
   switch (opcode) {
@@ -86,7 +86,7 @@ void write_set_parameter(struct DataFrame *command, uint8_t opcode2, uint8_t sin
   write_set_parameter(command, opcode2, payload, 1);
 }
 
-void write_set_parameter_flags(struct DataFrame *command, const struct TccState *state, uint8_t set_flags) {
+void write_set_parameter_flags(struct DataFrame *command, const struct Tu2cState *state, uint8_t set_flags) {
   uint8_t payload[6] = {
       static_cast<uint8_t>(state->mode | set_flags),
       static_cast<uint8_t>(state->fan | get_fan_bit_mask_for_mode(state->mode)),
@@ -98,19 +98,19 @@ void write_set_parameter_flags(struct DataFrame *command, const struct TccState 
   write_set_parameter(command, OPCODE2_SET_TEMP_WITH_FAN, payload, sizeof(payload));
 }
 
-void write_set_parameter_mode(struct DataFrame *command, const struct TccState *state) {
+void write_set_parameter_mode(struct DataFrame *command, const struct Tu2cState *state) {
   write_set_parameter(command, OPCODE2_SET_MODE, state->mode);
 }
 
-void write_set_parameter_power(struct DataFrame *command, const struct TccState *state) {
+void write_set_parameter_power(struct DataFrame *command, const struct Tu2cState *state) {
   write_set_parameter(command, OPCODE2_SET_POWER, state->power | 0b0010);
 }
 
-void write_set_parameter_vent(struct DataFrame *command, const struct TccState *state) {
+void write_set_parameter_vent(struct DataFrame *command, const struct Tu2cState *state) {
   write_set_parameter(command, OPCODE2_SET_VENT, state->vent);
 }
 
-uint8_t to_tcc_power(const climate::ClimateMode mode) {
+uint8_t to_tu2c_power(const climate::ClimateMode mode) {
   switch (mode) {
     case climate::CLIMATE_MODE_OFF:
       return 0;
@@ -119,7 +119,7 @@ uint8_t to_tcc_power(const climate::ClimateMode mode) {
   }
 }
 
-uint8_t to_tcc_mode(const climate::ClimateMode mode) {
+uint8_t to_tu2c_mode(const climate::ClimateMode mode) {
   switch (mode) {
     case climate::CLIMATE_MODE_OFF:
       return 0;
@@ -138,7 +138,7 @@ uint8_t to_tcc_mode(const climate::ClimateMode mode) {
   }
 }
 
-uint8_t to_tcc_fan(const climate::ClimateFanMode fan) {
+uint8_t to_tu2c_fan(const climate::ClimateFanMode fan) {
   switch (fan) {
     case climate::CLIMATE_FAN_AUTO:
       return FAN_PEED_AUTO;
@@ -153,7 +153,7 @@ uint8_t to_tcc_fan(const climate::ClimateFanMode fan) {
   }
 }
 
-climate::ClimateAction to_climate_action(const struct TccState *state) {
+climate::ClimateAction to_climate_action(const struct Tu2cState *state) {
   if (state->power == 0)
     return climate::CLIMATE_ACTION_OFF;
 
@@ -176,7 +176,7 @@ climate::ClimateAction to_climate_action(const struct TccState *state) {
   return climate::CLIMATE_ACTION_IDLE;
 }
 
-climate::ClimateMode to_climate_mode(const struct TccState *state) {
+climate::ClimateMode to_climate_mode(const struct Tu2cState *state) {
   if (state->power == 0)
     return climate::CLIMATE_MODE_OFF;
 
@@ -196,7 +196,7 @@ climate::ClimateMode to_climate_mode(const struct TccState *state) {
   return climate::CLIMATE_MODE_OFF;
 }
 
-climate::ClimateFanMode to_climate_fan(const struct TccState *state) {
+climate::ClimateFanMode to_climate_fan(const struct Tu2cState *state) {
   if (state->power == 0)
     return climate::CLIMATE_FAN_OFF;
 
@@ -214,7 +214,7 @@ climate::ClimateFanMode to_climate_fan(const struct TccState *state) {
   return climate::CLIMATE_FAN_ON;
 }
 
-TccLinkClimate::TccLinkClimate() {
+Tu2cLinkClimate::Tu2cLinkClimate() {
   target_temperature = NAN;
   this->traits_.set_supports_action(true);
   this->traits_.set_supports_current_temperature(true);
@@ -239,14 +239,14 @@ TccLinkClimate::TccLinkClimate() {
   this->traits_.set_visual_temperature_step(0.5);
 }
 
-climate::ClimateTraits TccLinkClimate::traits() { return traits_; }
+climate::ClimateTraits Tu2cLinkClimate::traits() { return traits_; }
 
-void TccLinkClimate::dump_config() {
-  ESP_LOGCONFIG(TAG, "TCC Link:");
+void Tu2cLinkClimate::dump_config() {
+  ESP_LOGCONFIG(TAG, "TU2C Link:");
   this->dump_traits_(TAG);
 }
 
-void TccLinkClimate::setup() {
+void Tu2cLinkClimate::setup() {
   if (this->failed_crcs_sensor_ != nullptr) {
     this->failed_crcs_sensor_->publish_state(0);
   }
@@ -280,34 +280,34 @@ void log_raw_data(const std::string prefix, const uint8_t raw[], size_t size) {
   ESP_LOGV(TAG, "%s%s", prefix.c_str(), res.c_str());
 }
 
-void TccLinkClimate::sync_from_received_state() {
+void Tu2cLinkClimate::sync_from_received_state() {
   uint8_t changes = 0;
 
-  auto new_mode = to_climate_mode(&tcc_state);
+  auto new_mode = to_climate_mode(&tu2c_state);
   if (new_mode != mode) {
     mode = new_mode;
     changes++;
   }
 
-  auto new_action = to_climate_action(&tcc_state);
+  auto new_action = to_climate_action(&tu2c_state);
   if (new_action != action) {
     action = new_action;
     changes++;
   }
 
-  auto new_fan_mode = to_climate_fan(&tcc_state);
+  auto new_fan_mode = to_climate_fan(&tu2c_state);
   if (new_fan_mode != fan_mode) {
     fan_mode = new_fan_mode;
     changes++;
   }
 
-  if (target_temperature != tcc_state.target_temp) {
-    target_temperature = tcc_state.target_temp;
+  if (target_temperature != tu2c_state.target_temp) {
+    target_temperature = tu2c_state.target_temp;
     changes++;
   }
 
-  if (current_temperature != tcc_state.room_temp) {
-    current_temperature = tcc_state.room_temp;
+  if (current_temperature != tu2c_state.room_temp) {
+    current_temperature = tu2c_state.room_temp;
     changes++;
   }
 
@@ -316,11 +316,11 @@ void TccLinkClimate::sync_from_received_state() {
   }
 
   if (this->vent_switch_) {
-    this->vent_switch_->publish_state(tcc_state.vent);
+    this->vent_switch_->publish_state(tu2c_state.vent);
   }
 }
 
-void TccLinkClimate::process_received_data(const struct DataFrame *frame) {
+void Tu2cLinkClimate::process_received_data(const struct DataFrame *frame) {
   switch (frame->source) {
     case 0x00:
     case TOSHIBA_MASTER:
@@ -349,16 +349,16 @@ void TccLinkClimate::process_received_data(const struct DataFrame *frame) {
           */
           log_data_frame("MASTER PARAMETERS", frame);
 
-          tcc_state.power = (frame->data[3] & STATUS_DATA_POWER_MASK);
-          tcc_state.mode =
+          tu2c_state.power = (frame->data[3] & STATUS_DATA_POWER_MASK);
+          tu2c_state.mode =
               (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_MODE_MASK) >> STATUS_DATA_MODE_SHIFT_BITS;
-          tcc_state.cooling = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & 0b00001000) >> 3;
-          tcc_state.heating = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & 0b00000001);
-          // tcc_state.heating = (frame->data[3] & 0b0100) >> 2;
-          tcc_state.preheating = (frame->data[3] & 0b0100) >> 2;
+          tu2c_state.cooling = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & 0b00001000) >> 3;
+          tu2c_state.heating = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & 0b00000001);
+          // tu2c_state.heating = (frame->data[3] & 0b0100) >> 2;
+          tu2c_state.preheating = (frame->data[3] & 0b0100) >> 2;
 
-          ESP_LOGD(TAG, "Mode: %02X, Cooling: %d, Heating: %d, Preheating: %d", tcc_state.mode, tcc_state.cooling,
-                   tcc_state.heating, tcc_state.preheating);
+          ESP_LOGD(TAG, "Mode: %02X, Cooling: %d, Heating: %d, Preheating: %d", tu2c_state.mode, tu2c_state.cooling,
+                   tu2c_state.heating, tu2c_state.preheating);
 
           sync_from_received_state();
 
@@ -378,23 +378,23 @@ void TccLinkClimate::process_received_data(const struct DataFrame *frame) {
             last_unconfirmed_command_ = {};  // reset last command
           }
 
-          tcc_state.power = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_POWER_MASK);
-          tcc_state.mode =
+          tu2c_state.power = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_POWER_MASK);
+          tu2c_state.mode =
               (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_MODE_MASK) >> STATUS_DATA_MODE_SHIFT_BITS;
-          tcc_state.fan = (frame->data[STATUS_DATA_FANVENT_BYTE] & STATUS_DATA_FAN_MASK) >> STATUS_DATA_FAN_SHIFT_BITS;
-          tcc_state.vent =
+          tu2c_state.fan = (frame->data[STATUS_DATA_FANVENT_BYTE] & STATUS_DATA_FAN_MASK) >> STATUS_DATA_FAN_SHIFT_BITS;
+          tu2c_state.vent =
               (frame->data[STATUS_DATA_FANVENT_BYTE] & STATUS_DATA_VENT_MASK) >> STATUS_DATA_VENT_SHIFT_BITS;
-          tcc_state.target_temp =
+          tu2c_state.target_temp =
               static_cast<float>(frame->data[STATUS_DATA_TARGET_TEMP_BYTE] & TEMPERATURE_DATA_MASK) /
                   TEMPERATURE_CONVERSION_RATIO -
               TEMPERATURE_CONVERSION_OFFSET;
           // don't set heating of cooling from command status update, since the
           // actuall will be delayed and will e reported via MASTER PARAMETER
-          // tcc_state.cooling = (frame->data[7] & 0b1000) >> 3;
-          // tcc_state.heating = (frame->data[7] & 0b0001);
-          tcc_state.preheating = (frame->data[4] & 0b10) >> 1;
+          // tu2c_state.cooling = (frame->data[7] & 0b1000) >> 3;
+          // tu2c_state.heating = (frame->data[7] & 0b0001);
+          tu2c_state.preheating = (frame->data[4] & 0b10) >> 1;
 
-          ESP_LOGD(TAG, "Mode: %02X, Preheating: %d", tcc_state.mode, tcc_state.preheating);
+          ESP_LOGD(TAG, "Mode: %02X, Preheating: %d", tu2c_state.mode, tu2c_state.preheating);
 
           sync_from_received_state();
 
@@ -405,25 +405,25 @@ void TccLinkClimate::process_received_data(const struct DataFrame *frame) {
 
           log_data_frame("EXTENDED STATUS", frame);
 
-          tcc_state.power = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_POWER_MASK);
-          tcc_state.mode =
+          tu2c_state.power = (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_POWER_MASK);
+          tu2c_state.mode =
               (frame->data[STATUS_DATA_MODEPOWER_BYTE] & STATUS_DATA_MODE_MASK) >> STATUS_DATA_MODE_SHIFT_BITS;
-          tcc_state.fan = (frame->data[STATUS_DATA_FANVENT_BYTE] & STATUS_DATA_FAN_MASK) >> STATUS_DATA_FAN_SHIFT_BITS;
-          tcc_state.vent =
+          tu2c_state.fan = (frame->data[STATUS_DATA_FANVENT_BYTE] & STATUS_DATA_FAN_MASK) >> STATUS_DATA_FAN_SHIFT_BITS;
+          tu2c_state.vent =
               (frame->data[STATUS_DATA_FANVENT_BYTE] & STATUS_DATA_VENT_MASK) >> STATUS_DATA_VENT_SHIFT_BITS;
-          tcc_state.target_temp =
+          tu2c_state.target_temp =
               static_cast<float>(frame->data[STATUS_DATA_TARGET_TEMP_BYTE] & TEMPERATURE_DATA_MASK) /
                   TEMPERATURE_CONVERSION_RATIO -
               TEMPERATURE_CONVERSION_OFFSET;
 
           if (frame->data[STATUS_DATA_TARGET_TEMP_BYTE + 1] > 1) {
-            tcc_state.room_temp =
+            tu2c_state.room_temp =
                 static_cast<float>(frame->data[STATUS_DATA_TARGET_TEMP_BYTE + 1]) / TEMPERATURE_CONVERSION_RATIO -
                 TEMPERATURE_CONVERSION_OFFSET;
           }
 
-          tcc_state.preheating = (frame->data[4] & 0b10) >> 1;
-          ESP_LOGD(TAG, "Mode: %02X, Preheating: %d", tcc_state.mode, tcc_state.preheating);
+          tu2c_state.preheating = (frame->data[4] & 0b10) >> 1;
+          ESP_LOGD(TAG, "Mode: %02X, Preheating: %d", tu2c_state.mode, tu2c_state.preheating);
 
           sync_from_received_state();
 
@@ -440,7 +440,7 @@ void TccLinkClimate::process_received_data(const struct DataFrame *frame) {
       if (frame->opcode1 == OPCODE_TEMPERATURE) {
         // current temperature is reported by the remote
         if (frame->data[3] > 1) {
-          tcc_state.room_temp =
+          tu2c_state.room_temp =
               static_cast<float>(frame->data[3]) / TEMPERATURE_CONVERSION_RATIO - TEMPERATURE_CONVERSION_OFFSET;
           sync_from_received_state();
         }
@@ -452,7 +452,7 @@ void TccLinkClimate::process_received_data(const struct DataFrame *frame) {
   }
 }
 
-bool TccLinkClimate::receive_data(const std::vector<uint8_t> data) {
+bool Tu2cLinkClimate::receive_data(const std::vector<uint8_t> data) {
   auto frame = DataFrame();
 
   for (size_t i = 0; i < data.size(); i++) {
@@ -462,7 +462,7 @@ bool TccLinkClimate::receive_data(const std::vector<uint8_t> data) {
   return receive_data_frame(&frame);
 }
 
-bool TccLinkClimate::receive_data_frame(const struct DataFrame *frame) {
+bool Tu2cLinkClimate::receive_data_frame(const struct DataFrame *frame) {
   if (frame->crc() != frame->calculate_crc()) {
     ESP_LOGW(TAG, "CRC check failed");
     log_data_frame("Failed frame", frame);
@@ -481,7 +481,7 @@ bool TccLinkClimate::receive_data_frame(const struct DataFrame *frame) {
   return true;
 }
 
-void TccLinkClimate::loop() {
+void Tu2cLinkClimate::loop() {
   // TODO: check if last_unconfirmed_command_ was not confirmed after a timeout
   // and log warning/error
 
@@ -572,7 +572,7 @@ void TccLinkClimate::loop() {
   }
 }
 
-size_t TccLinkClimate::send_new_state(const struct TccState *new_state) {
+size_t Tu2cLinkClimate::send_new_state(const struct Tu2cState *new_state) {
   auto commands = create_commands(new_state);
   if (commands.empty()) {
     ESP_LOGD(TAG, "New state has not changed. Nothing to send");
@@ -586,10 +586,10 @@ size_t TccLinkClimate::send_new_state(const struct TccState *new_state) {
   return commands.size();
 }
 
-std::vector<DataFrame> TccLinkClimate::create_commands(const struct TccState *new_state) {
+std::vector<DataFrame> Tu2cLinkClimate::create_commands(const struct Tu2cState *new_state) {
   auto commands = std::vector<DataFrame>();
 
-  if (new_state->power != tcc_state.power) {
+  if (new_state->power != tu2c_state.power) {
     if (new_state->power) {
       // turn on
       ESP_LOGD(TAG, "Turning on");
@@ -607,28 +607,28 @@ std::vector<DataFrame> TccLinkClimate::create_commands(const struct TccState *ne
     }
   }
 
-  if (new_state->mode != tcc_state.mode) {
+  if (new_state->mode != tu2c_state.mode) {
     ESP_LOGD(TAG, "Changing mode");
     auto command = DataFrame{};
     write_set_parameter_mode(&command, new_state);
     commands.push_back(command);
   }
 
-  if (new_state->fan != tcc_state.fan) {
+  if (new_state->fan != tu2c_state.fan) {
     ESP_LOGD(TAG, "Changing fan");
     auto command = DataFrame{};
     write_set_parameter_flags(&command, new_state, COMMAND_SET_FAN);
     commands.push_back(command);
   }
 
-  if (new_state->target_temp != tcc_state.target_temp) {
+  if (new_state->target_temp != tu2c_state.target_temp) {
     ESP_LOGD(TAG, "Changing target temperature");
     auto command = DataFrame{};
     write_set_parameter_flags(&command, new_state, COMMAND_SET_TEMP);
     commands.push_back(command);
   }
 
-  if (new_state->vent != tcc_state.vent) {
+  if (new_state->vent != tu2c_state.vent) {
     ESP_LOGD(TAG, "Changing vent");
     auto command = DataFrame{};
     write_set_parameter_vent(&command, new_state);
@@ -638,19 +638,19 @@ std::vector<DataFrame> TccLinkClimate::create_commands(const struct TccState *ne
   return commands;
 }
 
-void TccLinkClimate::control(const climate::ClimateCall &call) {
-  TccState new_state = TccState{tcc_state};
+void Tu2cLinkClimate::control(const climate::ClimateCall &call) {
+  Tu2cState new_state = Tu2cState{tu2c_state};
 
   if (call.get_mode().has_value()) {
     ESP_LOGD(TAG, "Control mode");
     auto mode = call.get_mode().value();
-    new_state.power = to_tcc_power(mode);
-    new_state.mode = to_tcc_mode(mode);
+    new_state.power = to_tu2c_power(mode);
+    new_state.mode = to_tu2c_mode(mode);
   }
 
   if (call.get_fan_mode().has_value()) {
     ESP_LOGD(TAG, "Control fan");
-    new_state.fan = to_tcc_fan(call.get_fan_mode().value());
+    new_state.fan = to_tu2c_fan(call.get_fan_mode().value());
   }
 
   if (call.get_target_temperature().has_value()) {
@@ -661,27 +661,27 @@ void TccLinkClimate::control(const climate::ClimateCall &call) {
   send_new_state(&new_state);
 }
 
-void TccLinkClimate::send_command(const struct DataFrame command) {
+void Tu2cLinkClimate::send_command(const struct DataFrame command) {
   log_data_frame("Enqueue command", &command);
   this->write_queue_.push(command);
 }
 
-bool TccLinkClimate::control_vent(bool state) {
-  if (!tcc_state.power) {
+bool Tu2cLinkClimate::control_vent(bool state) {
+  if (!tu2c_state.power) {
     ESP_LOGW(TAG, "Can't control vent when powered off");
     return false;
   }
   ESP_LOGD(TAG, "Control vent: %d", state);
-  TccState new_state = TccState{tcc_state};
+  Tu2cState new_state = Tu2cState{tu2c_state};
   new_state.vent = state;
   return send_new_state(&new_state) > 0;
 }
 
-void TccLinkVentSwitch::write_state(bool state) {
+void Tu2cLinkVentSwitch::write_state(bool state) {
   if (this->climate_->control_vent(state)) {
     // don't publish state. wait for the unit to report it's state
   }
 }
 
-}  // namespace tcc_link
+}  // namespace tu2c_link
 }  // namespace esphome

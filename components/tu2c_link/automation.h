@@ -2,17 +2,17 @@
 
 #include "esphome/core/component.h"
 #include "esphome/core/automation.h"
-#include "tcc_link.h"
+#include "tu2c_link.h"
 
 namespace esphome
 {
-  namespace tcc_link
+  namespace tu2c_link
   {
 
-    class TccLinkOnDataReceivedTrigger : public Trigger<std::vector<uint8_t>>
+    classTu2cLinkOnDataReceivedTrigger : public Trigger<std::vector<uint8_t>>
     {
     public:
-      TccLinkOnDataReceivedTrigger(TccLinkClimate *climate)
+     Tu2cLinkOnDataReceivedTrigger(Tu2cLinkClimate *climate)
       {
         climate->add_on_data_received_callback(
             [this](const struct DataFrame *frame)
@@ -22,5 +22,5 @@ namespace esphome
       }
     };
 
-  } // namespace tcc_link
+  } // namespace tu2c_link
 } // namespace esphome

@@ -9,7 +9,7 @@
 #include <queue>
 
 namespace esphome {
-namespace tcc_link {
+namespace tu2c_link {
 
 const uint32_t ALIVE_MESSAGE_PERIOD_MILLIS = 5000;
 const uint32_t LAST_ALIVE_TIMEOUT_MILLIS = ALIVE_MESSAGE_PERIOD_MILLIS * 3 + 1000;
@@ -218,7 +218,7 @@ struct DataFrameReader {
  private:
 };
 
-struct TccState {
+struct Tu2cState {
   uint8_t mode;
   uint8_t fan;
   uint8_t vent;
@@ -229,9 +229,9 @@ struct TccState {
   uint8_t heating;
   uint8_t preheating;
 
-  TccState(){};
+  Tu2cState(){};
 
-  TccState(const struct TccState *src) {
+  Tu2cState(const struct Tu2cState *src) {
     mode = src->mode;
     fan = src->fan;
     vent = src->vent;
@@ -244,9 +244,9 @@ struct TccState {
   };
 };
 
-class TccLinkClimate : public Component, public uart::UARTDevice, public climate::Climate {
+class Tu2cLinkClimate : public Component, public uart::UARTDevice, public climate::Climate {
  public:
-  TccLinkClimate();
+  Tu2cLinkClimate();
 
   void dump_config() override;
   void setup() override;
@@ -278,13 +278,13 @@ class TccLinkClimate : public Component, public uart::UARTDevice, public climate
   climate::ClimateTraits traits_;
 
   DataFrameReader data_reader;
-  TccState tcc_state;
+  Tu2cState tu2c_state;
 
   void process_received_data(const struct DataFrame *frame);
-  size_t send_new_state(const struct TccState *new_state);
+  size_t send_new_state(const struct Tu2cState *new_state);
   void sync_from_received_state();
 
-  std::vector<DataFrame> create_commands(const struct TccState *new_state);
+  std::vector<DataFrame> create_commands(const struct Tu2cState *new_state);
 
   // sensors
   binary_sensor::BinarySensor *connected_binary_sensor_{nullptr};
@@ -308,9 +308,9 @@ class TccLinkClimate : public Component, public uart::UARTDevice, public climate
   uint32_t last_master_alive_millis_ = 0;
 };
 
-class TccLinkVentSwitch : public switch_::Switch, public Component {
+class Tu2cLinkVentSwitch : public switch_::Switch, public Component {
  public:
-  TccLinkVentSwitch(TccLinkClimate *climate) { climate_ = climate; }
+  Tu2cLinkVentSwitch(Tu2cLinkClimate *climate) { climate_ = climate; }
 
   //   void setup() override;
   //   void dump_config() override;
@@ -324,8 +324,8 @@ class TccLinkVentSwitch : public switch_::Switch, public Component {
 
   void write_state(bool state) override;
 
-  TccLinkClimate *climate_;
+  Tu2cLinkClimate *climate_;
 };
 
-}  // namespace tcc_link
+}  // namespace tu2c_link
 }  // namespace esphome

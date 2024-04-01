@@ -21,7 +21,7 @@ DEPENDENCIES = ["uart"]
 AUTO_LOAD = ["climate", "binary_sensor", "sensor", "switch"]
 CODEOWNERS = ["@muxa"]
 
-tcc_link_ns = cg.esphome_ns.namespace("tcc_link")
+tu2c_link_ns = cg.esphome_ns.namespace("tu2c_link")
 
 CONF_CONNECTED = "connected"
 CONF_VENT = "vent"
@@ -29,21 +29,21 @@ CONF_FAILED_CRCS = "failed_crcs"
 
 CONF_ON_DATA_RECEIVED = "on_data_received"
 
-TccLinkClimate =  tcc_link_ns.class_(
-    "TccLinkClimate", climate.Climate, uart.UARTDevice, cg.Component
+Tu2cLinkClimate =  tu2c_link_ns.class_(
+    "Tu2cLinkClimate", climate.Climate, uart.UARTDevice, cg.Component
 )
 
-TccLinkVentSwitch =  tcc_link_ns.class_(
-    "TccLinkVentSwitch", switch.Switch, cg.Component
+Tu2cLinkVentSwitch =  tu2c_link_ns.class_(
+    "Tu2cLinkVentSwitch", switch.Switch, cg.Component
 )
 
-TccLinkOnDataReceivedTrigger = tcc_link_ns.class_(
-    "TccLinkOnDataReceivedTrigger", automation.Trigger.template()
+Tu2cLinkOnDataReceivedTrigger = tu2c_link_ns.class_(
+    "Tu2cLinkOnDataReceivedTrigger", automation.Trigger.template()
 )
 
 CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
     {
-        cv.GenerateID(): cv.declare_id(TccLinkClimate),
+        cv.GenerateID(): cv.declare_id(Tu2cLinkClimate),
         cv.Optional(CONF_CONNECTED): binary_sensor.binary_sensor_schema(
             device_class = DEVICE_CLASS_CONNECTIVITY,
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
@@ -52,7 +52,7 @@ CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
             switch.SWITCH_SCHEMA.extend(
                 cv.Schema(
                     {
-                        cv.GenerateID(): cv.declare_id(TccLinkVentSwitch),
+                        cv.GenerateID(): cv.declare_id(Tu2cLinkVentSwitch),
                     }
                 )
             ),
@@ -66,7 +66,7 @@ CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
         cv.Optional(CONF_ON_DATA_RECEIVED): automation.validate_automation(
             {
                 cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(
-                    TccLinkOnDataReceivedTrigger
+                    Tu2cLinkOnDataReceivedTrigger
                 ),
             }
         ),
@@ -75,7 +75,7 @@ CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
 
 def validate_uart(config):
     uart.final_validate_device_schema(
-        "tcc_link", baud_rate=2400, require_rx=True, require_tx=False
+        "tu2c_link", baud_rate=2400, require_rx=True, require_tx=False
     )(config)
 
 
