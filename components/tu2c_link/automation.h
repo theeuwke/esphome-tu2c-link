@@ -9,10 +9,10 @@ namespace esphome
   namespace tu2c_link
   {
 
-    classTu2cLinkOnDataReceivedTrigger : public Trigger<std::vector<uint8_t>>
+    class Tu2cLinkOnDataReceivedTrigger : public Trigger<std::vector<uint8_t>>
     {
     public:
-     Tu2cLinkOnDataReceivedTrigger(Tu2cLinkClimate *climate)
+      Tu2cLinkOnDataReceivedTrigger(Tu2cLinkClimate *climate)
       {
         climate->add_on_data_received_callback(
             [this](const struct DataFrame *frame)
