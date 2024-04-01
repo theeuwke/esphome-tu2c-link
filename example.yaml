@@ -28,7 +28,7 @@ climate:
     name: "${device_name}"
     id: toshiba_hp
     connected:
-      name: ""${device_name} Connected"
+      name: "${device_name} Connected"
     failed_crcs:
       name: "${device_name} Failed CRCs"
     vent:
