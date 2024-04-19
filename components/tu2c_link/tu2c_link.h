@@ -8,6 +8,17 @@
 #include <bitset>
 #include <queue>
 
+/* TUC2C Header Example
++--------+--------+--------+--------+----------+-------------+--------------+-----------+-----------+
+|   0    |   1    |   2    |   3    |   4-6    |     7-9     |      10      |   LEN-7   |  LAST-2   |
++--------+--------+--------+--------+----------+-------------+--------------+-----------+-----------+
+| SYNC A | SYNC B | OPCODE | LENGTH | SOURCE   | DESTINATION | OPCODE2/DATA | DATA      | CRC16     |
+| 0x0A   | 0x00   | 0x10   | 0x09   | 0x000008 | 0x004000    | 0xA1         | 0x00 0x41 | 0x21 0xef |
+| ------ | ------ | ------ | ------ | -------- | ----------- | ------------ | --------- | --------- |
+| NC     | NC     | NC     | NC     | L1-3     | L4-6        | L7           | L8-9      | NC        |
++--------+--------+--------+--------+----------+-------------+--------------+-----------+-----------+
+*/
+
 namespace esphome {
 namespace tu2c_link {
 
@@ -18,7 +29,7 @@ const uint32_t PACKET_MIN_WAIT_MILLIS = 200;
 const uint32_t FRAME_SEND_MILLIS_FROM_LAST_RECEIVE = 500;
 const uint32_t FRAME_SEND_MILLIS_FROM_LAST_SEND = 500;
 
-const uint8_t TOSHIBA_MASTER = 0x01;
+const uint8_t TOSHIBA_MASTER = 0x01; /* default address is 0? */
 const uint8_t TOSHIBA_REMOTE = 0x40;
 const uint8_t TOSHIBA_BROADCAST = 0xFE;
 const uint8_t TOSHIBA_REPORT = 0x52;
@@ -99,6 +110,9 @@ const uint8_t DATA_MIN_SIZE = 2;
 
 const uint8_t DATA_OFFSET_FROM_START = 4;
 
+const uint8_t DATA_FRAME_SYNC01 = 0;
+const uint8_t DATA_FRAME_SYNC02 = 1;
+
 const uint8_t DATA_FRAME_SOURCE = 0;
 const uint8_t DATA_FRAME_DEST = 1;
 const uint8_t DATA_FRAME_OPCODE1 = 2;
@@ -158,7 +172,7 @@ struct DataFrame {
   /**
    * Calculates CRC on the current data by creating an XOR sum
    */
-  uint8_t calculate_crc() const {
+  uint16_t calculate_crc() const {
     if (!validate_bounds())
       return 0;
 
