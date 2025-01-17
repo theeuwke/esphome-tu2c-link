@@ -140,7 +140,7 @@ struct DataFrame {
     if (!validate_bounds())
       return 0;
 
-    return DATA_OFFSET_FROM_START + data_length + 1;  // 1 for CRC byte end the end
+    return DATA_OFFSET_FROM_START + data_length + 2;  // 1 for CRC byte end the end
   }
 
   /**
