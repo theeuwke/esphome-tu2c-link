@@ -162,7 +162,7 @@ struct DataFrame {
    * Get CRC byte at the end of the data.
    * Returns 0 if not yet available
    */
-  uint8_t crc() const {
+  uint16_t crc() const {
     if (!validate_bounds())
       return 0;
 
