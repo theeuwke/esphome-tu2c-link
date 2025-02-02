@@ -176,10 +176,27 @@ struct DataFrame {
     if (!validate_bounds())
       return 0;
 
+//#if 0
+    //uint8_t result = 0;
+    //
+    //size_t len = size() - 1;  // exclude CRC byte and the end
+    //for (size_t i = 0; i < len; i++) {
+    //   result ^= raw[i];
+    //}
+    //return result;
+//#endif
+
+    uint8_t t;
+    uint8_t L;
     uint8_t result = 0;
-    size_t len = size() - 1;  // exclude CRC byte and the end
+    size_t len = size() - 1;
     for (size_t i = 0; i < len; i++) {
       result ^= raw[i];
+      L = result ^ (result << 4);
+      t = (L << 3) | (L >> 5);
+      L ^= (t & 0x07);
+      t = (t & 0xF8) ^ (((t << 1) | (t >> 7)) & 0x0F) ^ (uint8_t)(result >> 8);
+      result = (L << 8) | t;
     }
     return result;
   }

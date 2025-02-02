@@ -1,6 +1,6 @@
 #include "tu2c_link.h"
 
-#warning "20240118" 
+#warning "20250201" 
 
 namespace esphome {
 namespace tu2c_link {
