@@ -166,7 +166,7 @@ struct DataFrame {
     if (!validate_bounds())
       return 0;
 
-    return raw[size() - 1];
+    return raw[size() - 2];
   }
 
   /**
@@ -189,7 +189,7 @@ struct DataFrame {
     uint8_t t;
     uint8_t L;
     uint8_t result = 0;
-    size_t len = size() - 1;
+    size_t len = size() - 2;
     for (size_t i = 0; i < len; i++) {
       result ^= raw[i];
       L = result ^ (result << 4);
