@@ -41,7 +41,7 @@ Tu2cLinkOnDataReceivedTrigger = tu2c_link_ns.class_(
     "Tu2cLinkOnDataReceivedTrigger", automation.Trigger.template()
 )
 
-CONFIG_SCHEMA = climate.climate_schema.extend(
+CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
     {
         cv.GenerateID(): cv.declare_id(Tu2cLinkClimate),
         cv.Optional(CONF_CONNECTED): binary_sensor.binary_sensor_schema(
@@ -49,7 +49,7 @@ CONFIG_SCHEMA = climate.climate_schema.extend(
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         ),
         cv.Optional(CONF_VENT): cv.maybe_simple_value(
-            switch.switch_schema.extend(
+            switch.SWITCH_SCHEMA.extend(
                 cv.Schema(
                     {
                         cv.GenerateID(): cv.declare_id(Tu2cLinkVentSwitch),
