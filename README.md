@@ -1,6 +1,5 @@
 # ESPHome Toshiba TU2C-Link AC Component
-
-ESPHome component to integrate with Toshiba Air Conditioners via TU2C-Link protocol (AB line).
+ESPHome component to integrate with Toshiba Heatpumps type ESTIA R32 via TU2C-Link protocol (AB line).
 
 This code is based on muxa esphome-tcc-link: https://github.com/muxa/esphome-tcc-link
 
